@@ -33,6 +33,8 @@ public class BookAdapter extends ArrayAdapter<Book> {
 
         TextView tvTitle = (TextView) convertView.findViewById(R.id.book_title);
         tvTitle.setText(book.getTitle());
+        TextView tvSubtitle = (TextView) convertView.findViewById(R.id.subtitle);
+        tvSubtitle.setText(book.getmSubtitle());
 
         return convertView;
     }
