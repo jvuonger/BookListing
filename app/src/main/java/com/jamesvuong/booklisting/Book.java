@@ -20,11 +20,6 @@ public class Book {
     private ArrayList<String> mAuthors;
     private String mPublishedDate;
     private String mDescription;
-    private URL mThumbnailUrl;
-
-    public Book (String title) {
-        mTitle = title;
-    }
 
     public Book (JSONObject object) {
         try {
@@ -43,11 +38,6 @@ public class Book {
 
             this.mPublishedDate = volumeInfo.getString("publishedDate");
             this.mDescription = volumeInfo.getString("description");
-            try {
-                this.mThumbnailUrl = new URL(volumeInfo.getJSONObject("imageLinks").getString("smallThumbnail"));
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            }
 
         } catch (JSONException e) {
             e.printStackTrace();
@@ -55,7 +45,8 @@ public class Book {
     }
 
     public String getTitle() { return mTitle; }
-    public String getmSubtitle() { return mSubtitle; }
+    public String getSubtitle() { return mSubtitle; }
+    public String getPublishedDate() { return mPublishedDate; }
 
     // Factory method to convert an array of JSON objects into a list of objects
     public static ArrayList<Book> fromJson(JSONArray jsonObjects) {

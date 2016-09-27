@@ -5,9 +5,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.SearchView;
+import android.widget.TextView;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -17,23 +17,21 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.reflect.Array;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 
-import static com.jamesvuong.booklisting.R.id.search;
 
 public class MainActivity extends AppCompatActivity {
 
     /** Tag for the log messages */
     public static final String LOG_TAG = MainActivity.class.getSimpleName();
 
-    /** URL to query the Google Books API */
-    private static final String GOOGLE_BOOKS_REQUEST_URL =
-            "https://www.googleapis.com/books/v1/volumes?q=ios&maxResults=10"; //?q=ios&maxResults=10
+    private static final int NUMBER_OF_RESULTS = 10;
+
+    private static final String GOOGLE_BOOKS_REQUEST_URL = "https://www.googleapis.com/books/v1/volumes";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean onQueryTextSubmit(String query) {
                 // Kick off an {@link AsyncTask} to perform the network request
-                BookAsyncTask task = new BookAsyncTask();
+                BookAsyncTask task = new BookAsyncTask(query, NUMBER_OF_RESULTS);
                 task.execute();
                 return true;
             }
@@ -55,32 +53,42 @@ public class MainActivity extends AppCompatActivity {
                 return false;
             }
         });
-        search.setOnSearchClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Log.i(LOG_TAG, "onClick: " + this);
-            }
-        });
+
+        // hide listview initially
+        ListView lv = (ListView) findViewById(R.id.list_view);
+        lv.setVisibility(View.GONE);
     }
 
     // Update screen
     private void updateUi(ArrayList<Book> booksList) {
         BookAdapter adapter = new BookAdapter(this, booksList);
 
+        TextView tvInstructions = (TextView) findViewById(R.id.search_instructions);
+        tvInstructions.setVisibility(View.GONE);
+
         ListView listView = (ListView) findViewById(R.id.list_view);
         listView.setAdapter(adapter);
+        listView.setVisibility(View.VISIBLE);
     }
 
     private class BookAsyncTask extends AsyncTask<URL, Void, ArrayList<Book>> {
+        private String mSearchQuery;
+        private int mCount;
+
+        public BookAsyncTask(String searchQuery, int count) {
+            mSearchQuery = searchQuery;
+            mCount = count;
+        }
+
         @Override
         protected ArrayList<Book> doInBackground(URL... params) {
-            URL url = createUrl(GOOGLE_BOOKS_REQUEST_URL);
+            URL url = createUrl(GOOGLE_BOOKS_REQUEST_URL, mSearchQuery, mCount);
 
             String jsonResponse = "";
             try {
                 jsonResponse = makeHttpRequest(url);
             } catch (IOException e) {
-                //TODO Handle IOException
+                Log.e(LOG_TAG, "Error when calling doInBackground: ", e);
             }
 
             ArrayList<Book> booksList = extractItemsFromJson(jsonResponse);
@@ -97,11 +105,11 @@ public class MainActivity extends AppCompatActivity {
             updateUi(books);
         }
 
-        private URL createUrl(String stringUrl) {
+        private URL createUrl(String stringUrl, String searchQuery, int count) {
             URL url = null;
 
             try{
-                url = new URL(stringUrl);
+                url = new URL(stringUrl+"?q="+searchQuery+"&maxResults="+count);
             } catch (MalformedURLException exception) {
                 Log.e(LOG_TAG, "Error with creating URL: ", exception);
             }
@@ -121,14 +129,13 @@ public class MainActivity extends AppCompatActivity {
                 urlConnection.setConnectTimeout(15000);
                 urlConnection.connect();
 
-                if(urlConnection.getResponseCode() == 200) {
+                if(urlConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
                     inputStream = urlConnection.getInputStream();
                     jsonResponse = readFromStream(inputStream);
-                } else {
-                    //TODO handle bad response
                 }
-            } catch (IOException e) {
 
+            } catch (IOException e) {
+                Log.e(LOG_TAG, "Error when calling makeHttpRequest: ",e);
             }
 
             return jsonResponse;
