@@ -40,6 +40,9 @@ public class BookAdapter extends ArrayAdapter<Book> {
         TextView tvPublishedDate = (TextView) convertView.findViewById(R.id.published_date);
         tvPublishedDate.setText(book.getPublishedDate());
 
+        TextView tvAuthors = (TextView) convertView.findViewById(R.id.authors);
+        tvAuthors.setText(book.getAuthors());
+
         return convertView;
     }
 }

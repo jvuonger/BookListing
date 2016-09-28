@@ -11,6 +11,7 @@ import android.view.View;
 import android.widget.ListView;
 import android.widget.SearchView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -45,18 +46,20 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         cm = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
-        activeNetwork = cm.getActiveNetworkInfo();
 
         SearchView search = (SearchView) findViewById(R.id.search);
         search.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
+                activeNetwork = cm.getActiveNetworkInfo();
                 // Kick off an {@link AsyncTask} to perform the network request
                 if((activeNetwork != null) && activeNetwork.isConnectedOrConnecting()) {
                     BookAsyncTask task = new BookAsyncTask(query, NUMBER_OF_RESULTS);
                     task.execute();
                     return true;
                 } else {
+                    Toast toast = Toast.makeText(getApplicationContext(), "There is no internet connection available.  Please connect and try again.", Toast.LENGTH_LONG);
+                    toast.show();
                     return false;
                 }
             }
@@ -105,7 +108,7 @@ public class MainActivity extends AppCompatActivity {
         private int mCount;
 
         public BookAsyncTask(String searchQuery, int count) {
-            mSearchQuery = searchQuery;
+            mSearchQuery = searchQuery.replaceAll(" ", "%20");
             mCount = count;
         }
 

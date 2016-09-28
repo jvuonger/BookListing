@@ -3,6 +3,7 @@ package com.jamesvuong.booklisting;
 import android.content.Context;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.text.TextUtils;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -11,6 +12,8 @@ import org.json.JSONObject;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+
+import static android.R.id.list;
 
 /**
  * Created by jvuonger on 9/27/16.
@@ -67,6 +70,10 @@ public class Book implements Parcelable{
     public String getTitle() { return mTitle; }
     public String getSubtitle() { return mSubtitle; }
     public String getPublishedDate() { return mPublishedDate; }
+    public String getAuthors() {
+        if (mAuthors == null || mAuthors.size() == 0) return "";
+        return TextUtils.join(", ", mAuthors);
+    }
 
     // Factory method to convert an array of JSON objects into a list of objects
     public static ArrayList<Book> fromJson(JSONArray jsonObjects) {
