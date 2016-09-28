@@ -1,6 +1,8 @@
 package com.jamesvuong.booklisting;
 
 import android.content.Context;
+import android.os.Parcel;
+import android.os.Parcelable;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -14,12 +16,31 @@ import java.util.ArrayList;
  * Created by jvuonger on 9/27/16.
  */
 
-public class Book {
+public class Book implements Parcelable{
     private String mTitle;
     private String mSubtitle;
     private ArrayList<String> mAuthors;
     private String mPublishedDate;
-    private String mDescription;
+
+    @Override
+    public void writeToParcel(Parcel out, int flags) {
+        out.writeString(mTitle);
+        out.writeString(mSubtitle);
+        out.writeStringList(mAuthors);
+        out.writeString(mPublishedDate);
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    private Book (Parcel in) {
+        mTitle = in.readString();
+        mSubtitle = in.readString();
+        in.readStringList(mAuthors);
+        mPublishedDate = in.readString();
+    }
 
     public Book (JSONObject object) {
         try {
@@ -37,7 +58,6 @@ public class Book {
             }
 
             this.mPublishedDate = volumeInfo.getString("publishedDate");
-            this.mDescription = volumeInfo.getString("description");
 
         } catch (JSONException e) {
             e.printStackTrace();

@@ -1,5 +1,8 @@
 package com.jamesvuong.booklisting;
 
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -28,24 +31,34 @@ public class MainActivity extends AppCompatActivity {
 
     /** Tag for the log messages */
     public static final String LOG_TAG = MainActivity.class.getSimpleName();
-
     private static final int NUMBER_OF_RESULTS = 10;
-
     private static final String GOOGLE_BOOKS_REQUEST_URL = "https://www.googleapis.com/books/v1/volumes";
+    private static final String BOOKS_LIST_STATE = "booksList";
+
+    private ConnectivityManager cm;
+    private NetworkInfo activeNetwork;
+    private ArrayList<Book> mBooksList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        cm = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
+        activeNetwork = cm.getActiveNetworkInfo();
+
         SearchView search = (SearchView) findViewById(R.id.search);
         search.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
                 // Kick off an {@link AsyncTask} to perform the network request
-                BookAsyncTask task = new BookAsyncTask(query, NUMBER_OF_RESULTS);
-                task.execute();
-                return true;
+                if((activeNetwork != null) && activeNetwork.isConnectedOrConnecting()) {
+                    BookAsyncTask task = new BookAsyncTask(query, NUMBER_OF_RESULTS);
+                    task.execute();
+                    return true;
+                } else {
+                    return false;
+                }
             }
 
             @Override
@@ -54,14 +67,30 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // hide listview initially
-        ListView lv = (ListView) findViewById(R.id.list_view);
-        lv.setVisibility(View.GONE);
+        // Check whether we're recreating a previously destroyed instance
+        if (savedInstanceState != null) {
+            // Restore value of members from saved state
+            mBooksList = savedInstanceState.getParcelableArrayList(BOOKS_LIST_STATE);
+            updateUi();
+        } else {
+            // hide listview initially
+            ListView lv = (ListView) findViewById(R.id.list_view);
+            lv.setVisibility(View.GONE);
+        }
+
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        // Save the user's current game state
+        outState.putParcelableArrayList(BOOKS_LIST_STATE, mBooksList);
+
+        super.onSaveInstanceState(outState);
     }
 
     // Update screen
-    private void updateUi(ArrayList<Book> booksList) {
-        BookAdapter adapter = new BookAdapter(this, booksList);
+    private void updateUi() {
+        BookAdapter adapter = new BookAdapter(this, mBooksList);
 
         TextView tvInstructions = (TextView) findViewById(R.id.search_instructions);
         tvInstructions.setVisibility(View.GONE);
@@ -101,8 +130,8 @@ public class MainActivity extends AppCompatActivity {
             if (books == null) {
                 return;
             }
-
-            updateUi(books);
+            mBooksList = books;
+            updateUi();
         }
 
         private URL createUrl(String stringUrl, String searchQuery, int count) {
